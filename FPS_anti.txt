@@ -1,0 +1,430 @@
+--// FPS ANTI TEST BY RYANG - ULTRA ESTRICTA + ALIGNPOSITION 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local player = Players.LocalPlayer
+
+local anclaEnabled = false
+local antiSeatEnabled = false
+local heartbeatEnabled = false
+local checkpointCFrame = nil
+
+-- ==================== REFERENCIAS DEL JUEGO ====================
+local SafePos = Workspace:FindFirstChild("SpawnLocation_city") and Workspace.SpawnLocation_city:FindFirstChild("SafePos")
+local ExceptionTrigger = Workspace:FindFirstChild("SpawnLocation_city") and Workspace.SpawnLocation_city:FindFirstChild("ExceptionTrigger")
+local safeY = SafePos and SafePos.WorldPosition.Y or 15.7
+
+-- ==================== ALIGNPOSITION ====================
+local alignPosition = nil
+local alignAttachment = nil
+local function createAlignPosition(root)
+    if alignPosition then return end
+    alignAttachment = Instance.new("Attachment")
+    alignAttachment.Parent = root
+    alignPosition = Instance.new("AlignPosition")
+    alignPosition.Name = "FPS anti"
+    alignPosition.Attachment0 = alignAttachment
+    alignPosition.Position = root.Position
+    alignPosition.MaxForce = 10000000
+    alignPosition.Responsiveness = 300
+    alignPosition.RigidityEnabled = true
+    alignPosition.Parent = root
+end
+
+local function destroyAlignPosition()
+    if alignPosition then
+        alignPosition:Destroy()
+        alignPosition = nil
+    end
+    if alignAttachment then
+        alignAttachment:Destroy()
+        alignAttachment = nil
+    end
+end
+
+-- ==================== SONIDO (MODIFICADOv1.0 por RyanG) ====================
+local soundId = "rbxassetid://91955917303468"   -- ← Nuevo ID
+local customSound = Instance.new("Sound")
+customSound.SoundId = soundId
+customSound.Volume = 0.7
+customSound.Looped = false
+customSound.Parent = SoundService
+
+customSound:Play()
+
+-- Fade (Lowcut) solo decoracion
+task.delay(11, function()
+    if customSound and customSound.IsPlaying then
+        local tweenInfo = TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        TweenService:Create(customSound, tweenInfo, {Volume = 0}):Play()
+        
+        task.delay(2.8, function()
+            if customSound then 
+                customSound:Stop() 
+            end
+        end)
+    end
+end)
+
+-- ==================== GUI ====================
+local sg = Instance.new("ScreenGui", game.CoreGui)
+sg.Name = "FPS"
+sg.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame", sg)
+mainFrame.Size = UDim2.new(0,340,0,250)
+mainFrame.Position = UDim2.new(0,40,0,200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15,15,20)
+mainFrame.Active = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,18)
+
+local versionText = Instance.new("TextLabel", mainFrame)
+versionText.Size = UDim2.new(0,220,0,14)
+versionText.Position = UDim2.new(0,12,0,24)
+versionText.BackgroundTransparency = 1
+versionText.Text = "v1 por @power_gost (RyanGosling)"
+versionText.TextColor3 = Color3.fromRGB(180,180,180)
+versionText.TextXAlignment = Enum.TextXAlignment.Left
+versionText.Font = Enum.Font.Gotham
+versionText.TextSize = 10
+versionText.ZIndex = 1
+versionText.Active = false
+
+-- Border Layers
+local borderLayers = {}
+for i=1,3 do
+    local b = Instance.new("Frame")
+    b.Size = UDim2.new(1, i*4, 1, i*4)
+    b.Position = UDim2.new(0,-i*2,0,-i*2)
+    b.BackgroundColor3 = Color3.fromRGB(15,15,20)
+    b.BorderSizePixel = 0
+    b.ZIndex = 0
+    b.Parent = mainFrame
+    Instance.new("UICorner",b).CornerRadius = UDim.new(0,18+i*2)
+    table.insert(borderLayers,b)
+end
+
+local t=0
+RunService.RenderStepped:Connect(function(dt)
+    t += dt*2
+    local pulse = (math.sin(t)+1)/2
+    local active = anclaEnabled or antiSeatEnabled or heartbeatEnabled
+    for i,v in ipairs(borderLayers) do
+        if active then
+            v.BackgroundTransparency = 0.45 + pulse*0.15 + i*0.02
+        else
+            v.BackgroundTransparency = 0.85 + i*0.02
+        end
+    end
+end)
+
+-- Cometas
+local bg = Instance.new("Frame", mainFrame)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundTransparency = 1
+local comets = {}
+for i=1,4 do
+    local c = Instance.new("Frame")
+    c.Size = UDim2.new(0,2,0,2)
+    c.BackgroundColor3 = Color3.new(1,1,1)
+    c.BackgroundTransparency = 0.45
+    c.Parent = bg
+    Instance.new("UICorner",c).CornerRadius = UDim.new(1,0)
+    table.insert(comets,{
+        frame = c,
+        x = math.random(30,290),
+        y = math.random(20,190),
+        speedX = (i%2==0) and 0.15 or -0.15,
+        speedY = 0.38 + math.random()*0.32,
+        alpha = 0.85
+    })
+end
+
+RunService.RenderStepped:Connect(function()
+    for _,c in ipairs(comets) do
+        c.x += c.speedX
+        c.y += c.speedY
+        c.alpha -= 0.012
+        if c.alpha <= 0.07 then
+            c.x = math.random(30,290)
+            c.y = math.random(20,190)
+            c.alpha = 0.88
+        end
+        c.frame.Position = UDim2.new(0,c.x,0,c.y)
+        c.frame.BackgroundTransparency = 1 - c.alpha
+    end
+end)
+
+-- Panel
+local panel = Instance.new("Frame", mainFrame)
+panel.Size = UDim2.new(1,-28,0,150)
+panel.Position = UDim2.new(0,14,0,70)
+panel.BackgroundColor3 = Color3.fromRGB(24,24,32)
+Instance.new("UICorner",panel).CornerRadius = UDim.new(0,12)
+
+local label1 = Instance.new("TextLabel", panel) label1.Size = UDim2.new(1,-80,1/3,0) label1.Position = UDim2.new(0,12,0,0) label1.TextXAlignment = Enum.TextXAlignment.Left label1.Text = "Activar ancla" label1.BackgroundTransparency = 1 label1.TextColor3 = Color3.new(1,1,1)
+local btn1 = Instance.new("TextButton", panel) btn1.Size = UDim2.new(0,50,0,25) btn1.Position = UDim2.new(1,-70,1/6,-12) btn1.Text = "OFF" btn1.BackgroundColor3 = Color3.fromRGB(60,60,60) Instance.new("UICorner",btn1).CornerRadius = UDim.new(1,0)
+
+local label2 = Instance.new("TextLabel", panel) label2.Size = UDim2.new(1,-80,1/3,0) label2.Position = UDim2.new(0,12,1/3,0) label2.TextXAlignment = Enum.TextXAlignment.Left label2.Text = "Activar AntiSeat" label2.BackgroundTransparency = 1 label2.TextColor3 = Color3.new(1,1,1)
+local btn2 = Instance.new("TextButton", panel) btn2.Size = UDim2.new(0,50,0,25) btn2.Position = UDim2.new(1,-70,0.5,-12) btn2.Text = "OFF" btn2.BackgroundColor3 = Color3.fromRGB(60,60,60) Instance.new("UICorner",btn2).CornerRadius = UDim.new(1,0)
+
+local label3 = Instance.new("TextLabel", panel) label3.Size = UDim2.new(1,-80,1/3,0) label3.Position = UDim2.new(0,12,2/3,0) label3.TextXAlignment = Enum.TextXAlignment.Left label3.Text = "Activar Heartbeat" label3.BackgroundTransparency = 1 label3.TextColor3 = Color3.new(1,1,1)
+local btn3 = Instance.new("TextButton", panel) btn3.Size = UDim2.new(0,50,0,25) btn3.Position = UDim2.new(1,-70,5/6,-12) btn3.Text = "OFF" btn3.BackgroundColor3 = Color3.fromRGB(60,60,60) Instance.new("UICorner",btn3).CornerRadius = UDim.new(1,0)
+
+-- Minimizar y Restore
+local minimize = Instance.new("TextButton", mainFrame)
+minimize.Size = UDim2.new(0,28,0,28) minimize.Position = UDim2.new(1,-36,0,8) minimize.Text = "-" minimize.BackgroundColor3 = Color3.fromRGB(25,25,30)
+
+local restore = Instance.new("Frame", sg)
+restore.Size = UDim2.new(0,48,0,48) restore.Position = UDim2.new(0,40,0,220) restore.BackgroundColor3 = Color3.fromRGB(0,0,0) restore.Visible = false
+Instance.new("UICorner",restore).CornerRadius = UDim.new(0,16)
+
+local restoreText = Instance.new("TextLabel", restore)
+restoreText.Size = UDim2.new(1,0,1,0) restoreText.BackgroundTransparency = 1 restoreText.Text = "FPS" restoreText.TextColor3 = Color3.new(1,1,1) restoreText.TextScaled = true restoreText.Font = Enum.Font.GothamBold
+
+local function isClick(input)
+    return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
+end
+
+-- ==================== DOWNWARD GUARDIAN ====================
+local GuardianEnabled = false
+
+local function ActivateDownwardGuardian(savedCFrame)
+    checkpointCFrame = savedCFrame
+    GuardianEnabled = true
+    print("Downward Guardian Activado con fines de testeo ")
+end
+
+local function DeactivateDownwardGuardian()
+    GuardianEnabled = false
+end
+
+RunService.Stepped:Connect(function()
+    if not GuardianEnabled or not checkpointCFrame then return end
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local pos = root.Position
+    local distToCP = (pos - checkpointCFrame.Position).Magnitude
+    local distToTrigger = ExceptionTrigger and (pos - ExceptionTrigger.Position).Magnitude or 99999
+
+    if distToTrigger < 72 then
+        root.CFrame = checkpointCFrame
+        root.AssemblyLinearVelocity = Vector3.new(0, 135, 0)
+        root.AssemblyAngularVelocity = Vector3.zero
+        return
+    end
+
+    if pos.Y < (checkpointCFrame.Position.Y - 7.2) then
+        root.CFrame = checkpointCFrame
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    end
+
+    if root.AssemblyLinearVelocity.Y < -98 then
+        root.CFrame = CFrame.new(pos.X, checkpointCFrame.Position.Y + 14, pos.Z)
+        root.AssemblyLinearVelocity = Vector3.new(0, 110, 0)
+    end
+
+    if distToCP > 10.5 then
+        root.CFrame = checkpointCFrame
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not GuardianEnabled or not checkpointCFrame then return end
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local vel = root.AssemblyLinearVelocity
+    root.AssemblyLinearVelocity = Vector3.new(vel.X * 0.2, math.max(vel.Y * 0.08, -15), vel.Z * 0.2)
+end)
+
+-- ==================== CONTROLES ====================
+btn1.InputBegan:Connect(function(input)
+    if not isClick(input) then return end
+    anclaEnabled = not anclaEnabled
+    if anclaEnabled then
+        local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if r then
+            checkpointCFrame = r.CFrame
+            createAlignPosition(r)
+            ActivateDownwardGuardian(checkpointCFrame)
+        end
+        btn1.Text = "ON"
+        btn1.BackgroundColor3 = Color3.fromRGB(0,160,80)
+    else
+        destroyAlignPosition()
+        DeactivateDownwardGuardian()
+        btn1.Text = "OFF"
+        btn1.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    end
+end)
+
+btn2.InputBegan:Connect(function(input)
+    if not isClick(input) then return end
+    antiSeatEnabled = not antiSeatEnabled
+    if antiSeatEnabled then 
+        btn2.Text = "ON" 
+        btn2.BackgroundColor3 = Color3.fromRGB(0,160,80)
+    else 
+        btn2.Text = "OFF" 
+        btn2.BackgroundColor3 = Color3.fromRGB(60,60,60) 
+    end
+end)
+
+btn3.InputBegan:Connect(function(input)
+    if not isClick(input) then return end
+    heartbeatEnabled = not heartbeatEnabled
+    if heartbeatEnabled then 
+        btn3.Text = "ON" 
+        btn3.BackgroundColor3 = Color3.fromRGB(0,160,80)
+    else 
+        btn3.Text = "OFF" 
+        btn3.BackgroundColor3 = Color3.fromRGB(60,60,60) 
+    end
+end)
+
+minimize.InputBegan:Connect(function(input)
+    if not isClick(input) then return end
+    mainFrame.Visible = false
+    restore.Visible = true
+end)
+
+restore.InputBegan:Connect(function(input)
+    if not isClick(input) then return end
+    mainFrame.Visible = true
+    restore.Visible = false
+end)
+
+local function dragify(obj)
+    local dragging = false
+    local dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if isClick(input) then
+            dragging = true
+            dragStart = input.Position
+            startPos = obj.Position
+        end
+    end)
+    obj.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    obj.InputEnded:Connect(function(input)
+        if isClick(input) then dragging = false end
+    end)
+end
+
+dragify(mainFrame)
+dragify(restore)
+
+-- ==================== ANTISEAT ====================
+local TARGETS = {"Babycar_a","Babycar_b","Babycar_c","Stretcher","FoldingTable_1","Folding_table_02"}
+local function isTarget(model)
+    for _,n in ipairs(TARGETS) do
+        if model.Name:find(n) then return true end
+    end
+    return false
+end
+
+Workspace.DescendantAdded:Connect(function(obj)
+    if not antiSeatEnabled then return end
+    if obj.Name ~= "SeatWeld" then return end
+    local model = obj:FindFirstAncestorOfClass("Model")
+    if model and isTarget(model) then
+        pcall(function() obj:Destroy() end)
+    end
+end)
+
+local function antiSeat()
+    if not antiSeatEnabled then return end
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    hum.Sit = false
+    hum:ChangeState(Enum.HumanoidStateType.Running)
+    hum.PlatformStand = false
+end
+
+-- ==================== LOOPS ORIGINALES ====================
+local function getRoot()
+    local c = player.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+RunService.RenderStepped:Connect(function()
+    local root = getRoot()
+    if anclaEnabled and root and checkpointCFrame then
+        root.CFrame = checkpointCFrame
+        root.Velocity = Vector3.zero
+    end
+    antiSeat()
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not heartbeatEnabled or not anclaEnabled then return end
+    local root = getRoot()
+    if root and checkpointCFrame then
+        root.CFrame = checkpointCFrame
+        root.Velocity = Vector3.zero
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if not anclaEnabled then return end
+    local char = player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not root or not hum or not checkpointCFrame then return end
+    root.CFrame = checkpointCFrame
+    root.AssemblyLinearVelocity = Vector3.zero
+    root.AssemblyAngularVelocity = Vector3.zero
+    hum:ChangeState(Enum.HumanoidStateType.Running)
+    hum.Sit = false
+    hum.PlatformStand = false
+end)
+
+-- ==================== SISTEMA DE APOYO  ====================
+local CUPULA = 1.1
+RunService.RenderStepped:Connect(function()
+    if not anclaEnabled then return end
+    local root = getRoot()
+    if not root or not checkpointCFrame then return end
+    if (root.Position - checkpointCFrame.Position).Magnitude > CUPULA then
+        root.CFrame = checkpointCFrame
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not anclaEnabled then return end
+    local root = getRoot()
+    if not root or not checkpointCFrame then return end
+    if root.Position.Y < (safeY - 8) then
+        root.CFrame = checkpointCFrame
+    end
+end)
+
+local MAX_DISTANCE = 3.8
+RunService.Stepped:Connect(function()
+    if not anclaEnabled then return end
+    local root = getRoot()
+    if not root or not checkpointCFrame then return end
+    if (root.Position - checkpointCFrame.Position).Magnitude > MAX_DISTANCE then
+        root.CFrame = checkpointCFrame
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    end
+    if ExceptionTrigger and (root.Position - ExceptionTrigger.Position).Magnitude < 70 then
+        root.CFrame = checkpointCFrame
+    end
+end)
+
+print("FPS antb TEST OPEN SOURCE POR RYANG")
