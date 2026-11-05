@@ -70,7 +70,7 @@ end)
 
 -- ==================== GUI ====================
 local sg = Instance.new("ScreenGui", game.CoreGui)
-sg.Name = "FPS"
+sg.Name = "GODLESS"
 sg.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", sg)
