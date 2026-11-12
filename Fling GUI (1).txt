@@ -1,0 +1,916 @@
+local P, Cam, RS, UIS = game:GetService("Players").LocalPlayer, workspace.CurrentCamera, game:GetService("RunService"), game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local CG = game:GetService("CoreGui")
+local TS = game:GetService("TweenService")
+
+if CG:FindFirstChild("DeltaUltimateUI") then CG.DeltaUltimateUI:Destroy() end
+
+local OWNER_NAME = "amir_fps17"
+local SCRIPT_TITLE = "🌪️ EREB FLING GUI" -- AI: Change this title based on the game!
+
+local ACCENT = Color3.fromRGB(255, 60, 90)
+local ACCENT_GLOW = Color3.fromRGB(255, 110, 70)
+local BG_DARK = Color3.fromRGB(18, 20, 28)
+local BG_LIGHT = Color3.fromRGB(26, 29, 40)
+local BG_INPUT = Color3.fromRGB(12, 14, 20)
+local TEXT_MAIN = Color3.fromRGB(245, 245, 250)
+local TEXT_SUB = Color3.fromRGB(170, 175, 190)
+
+local function tw(obj, props, time, style)
+    TS:Create(obj, TweenInfo.new(time or 0.3, style or Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+end
+local function c(cls, props)
+    local i = Instance.new(cls); for k, v in pairs(props) do i[k] = v end; return i
+end
+local function corner(p, r) c("UICorner", {CornerRadius = UDim.new(0, r or 8), Parent = p}) end
+local function stroke(p, col, thick) c("UIStroke", {Color = col or Color3.fromRGB(40, 45, 60), Thickness = thick or 1, Parent = p}) end
+local function gradient(p, c1, c2, rot) c("UIGradient", {Color = ColorSequence.new{ColorSequenceKeypoint.new(0, c1), ColorSequenceKeypoint.new(1, c2)}, Rotation = rot or 0, Parent = p}) end
+
+local Gui = c("ScreenGui", {Name = "DeltaUltimateUI", ResetOnSpawn = false, Parent = pcall(function() return CG end) and CG or P:WaitForChild("PlayerGui")})
+
+local NotifContainer = c("Frame", {Size = UDim2.new(0, 260, 1, -100), Position = UDim2.new(0, 15, 0, 50), BackgroundTransparency = 1, Parent = Gui})
+c("UIListLayout", {Padding = UDim.new(0, 12), VerticalAlignment = Enum.VerticalAlignment.Top, Parent = NotifContainer})
+
+local function Notify(title, msg, color)
+    local wrapper = c("Frame", {Size = UDim2.new(1, 0, 0, 65), BackgroundTransparency = 1, Parent = NotifContainer})
+    local notif = c("Frame", {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(-1.5, 0, 0, 0), BackgroundColor3 = BG_DARK, Parent = wrapper})
+    corner(notif, 12); stroke(notif, Color3.fromRGB(45, 50, 65), 1.5)
+    local accent = c("Frame", {Size = UDim2.new(0, 5, 1, 0), BackgroundColor3 = color or ACCENT, Parent = notif}); corner(accent, 12)
+    gradient(accent, color or ACCENT, ACCENT_GLOW, 90)
+    c("TextLabel", {Size = UDim2.new(1, -24, 0, 20), Position = UDim2.new(0, 16, 0, 10), Text = title, TextColor3 = color or ACCENT, Font = Enum.Font.GothamBlack, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = notif})
+    c("TextLabel", {Size = UDim2.new(1, -24, 0, 20), Position = UDim2.new(0, 16, 0, 32), Text = msg, TextColor3 = TEXT_SUB, Font = Enum.Font.GothamMedium, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = notif})
+    tw(notif, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Bounce)
+    task.delay(3.5, function()
+        tw(notif, {Position = UDim2.new(-1.5, 0, 0, 0)}, 0.4, Enum.EasingStyle.Back)
+        task.wait(0.4); wrapper:Destroy()
+    end)
+end
+
+local Main = c("Frame", {Size = UDim2.new(0, 290, 0, 380), Position = UDim2.new(0.5, -145, 0.2, 0), BackgroundColor3 = BG_DARK, Active = true, Parent = Gui, ClipsDescendants = true})
+corner(Main, 12); stroke(Main, ACCENT, 1.5)
+gradient(Main, Color3.fromRGB(24, 27, 36), Color3.fromRGB(14, 15, 22), 45)
+
+local Top = c("Frame", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = Color3.fromRGB(15, 17, 24), BackgroundTransparency = 0.3, Parent = Main})
+local Title = c("TextLabel", {Size = UDim2.new(1, -40, 0, 22), Position = UDim2.new(0, 16, 0, 8), Text = SCRIPT_TITLE, TextColor3 = Color3.fromRGB(255, 255, 255), TextSize = 16, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Top})
+gradient(Title, ACCENT, ACCENT_GLOW, 0)
+
+local SubLbl = c("TextLabel", {Size = UDim2.new(1, -40, 0, 12), Position = UDim2.new(0, 16, 0, 30), Text = "Made By EREN (User: amir_fps17)", TextSize = 9, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Top})
+task.spawn(function() while task.wait() do SubLbl.TextColor3 = Color3.fromHSV(tick() % 4 / 4, 1, 1) end end)
+
+local MinBtn = c("TextButton", {Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(1, -38, 0, 11), BackgroundColor3 = BG_LIGHT, Text = "-", TextColor3 = Color3.fromRGB(255, 255, 255), TextSize = 16, Font = Enum.Font.GothamBold, Parent = Top, AutoButtonColor = false})
+corner(MinBtn, 8); stroke(MinBtn, Color3.fromRGB(55, 60, 75))
+
+local Div = c("Frame", {Size = UDim2.new(1, 0, 0, 2), Position = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), BorderSizePixel = 0, Parent = Top})
+gradient(Div, ACCENT, ACCENT_GLOW, 90)
+
+local drag, dStart, sPos
+Top.InputBegan:Connect(function(i) if i.UserInputType.Name:find("Mouse") or i.UserInputType.Name == "Touch" then drag, dStart, sPos = true, i.Position, Main.Position end end)
+UIS.InputChanged:Connect(function(i) if drag and (i.UserInputType.Name:find("Mouse") or i.UserInputType.Name == "Touch") then local d = i.Position - dStart; Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y) end end)
+UIS.InputEnded:Connect(function(i) if i.UserInputType.Name:find("Mouse") or i.UserInputType.Name == "Touch" then drag = false end end)
+
+local Content = c("ScrollingFrame", {Size = UDim2.new(1, -16, 1, -65), Position = UDim2.new(0, 8, 0, 58), BackgroundTransparency = 1, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarThickness = 2, ScrollBarImageColor3 = ACCENT, Parent = Main})
+local Layout = c("UIListLayout", {Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = Content})
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Content.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20) end)
+
+local isMin = false
+MinBtn.MouseButton1Click:Connect(function() 
+    isMin = not isMin
+    if isMin then tw(Content, {CanvasPosition = Vector2.new(0,0)}, 0.2); task.wait(0.1); Content.Visible = false; tw(Main, {Size = UDim2.new(0, 290, 0, 50)}, 0.4, Enum.EasingStyle.Back)
+    else tw(Main, {Size = UDim2.new(0, 290, 0, 380)}, 0.4, Enum.EasingStyle.Back); task.wait(0.2); Content.Visible = true end
+    MinBtn.Text = isMin and "+" or "-" 
+end)
+
+local curOrder = 0
+local function O() curOrder = curOrder + 10; return curOrder end
+
+local function AttachInfo(parentFrame, infoString, layoutOrderNum, btnPos)
+    local InfoBtn = c("TextButton", {Size = UDim2.new(0, 24, 0, 24), AnchorPoint = Vector2.new(1, 0.5), Position = btnPos, BackgroundColor3 = Color3.fromRGB(35, 38, 50), Text = "?", TextColor3 = ACCENT_GLOW, Font = Enum.Font.GothamBlack, TextSize = 12, Parent = parentFrame, AutoButtonColor = false})
+    corner(InfoBtn, 12); stroke(InfoBtn, Color3.fromRGB(70, 75, 90))
+    local InfoTxt = c("TextLabel", {Size = UDim2.new(1, 0, 0, 22), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = layoutOrderNum, BackgroundColor3 = Color3.fromRGB(30, 25, 35), Text = "💡 " .. infoString, TextColor3 = Color3.fromRGB(255, 210, 120), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, Visible = false, BackgroundTransparency = 1, TextTransparency = 1, Parent = Content})
+    corner(InfoTxt, 8); stroke(InfoTxt, Color3.fromRGB(255, 120, 60), 1)
+    c("UIPadding", {PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), Parent = InfoTxt})
+    local InfoStroke = InfoTxt:FindFirstChildOfClass("UIStroke"); if InfoStroke then InfoStroke.Transparency = 1 end
+    InfoBtn.MouseButton1Click:Connect(function()
+        tw(InfoBtn, {Size = UDim2.new(0, 20, 0, 20)}, 0.1); task.wait(0.1); tw(InfoBtn, {Size = UDim2.new(0, 24, 0, 24)}, 0.2, Enum.EasingStyle.Bounce)
+        InfoTxt.Visible = true; tw(InfoTxt, {BackgroundTransparency = 0.1, TextTransparency = 0}, 0.3)
+        if InfoStroke then tw(InfoStroke, {Transparency = 0.1}, 0.3) end
+        local clickTime = tick(); InfoTxt:SetAttribute("LastToggled", clickTime)
+        task.delay(10, function()
+            if InfoTxt:GetAttribute("LastToggled") == clickTime and InfoTxt.Visible then
+                tw(InfoTxt, {BackgroundTransparency = 1, TextTransparency = 1}, 0.5); if InfoStroke then tw(InfoStroke, {Transparency = 1}, 0.5) end
+                task.wait(0.5); if InfoTxt:GetAttribute("LastToggled") == clickTime then InfoTxt.Visible = false end
+            end
+        end)
+    end)
+end
+
+local function MakeHeader(txt, infoText) 
+    local order = O(); local container = c("Frame", {Size = UDim2.new(1, 0, 0, 24), LayoutOrder = order, BackgroundTransparency = 1, Parent = Content})
+    local ribbon = c("Frame", {Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = ACCENT, BackgroundTransparency = 0.85, Parent = container}); corner(ribbon, 6)
+    c("UIGradient", {Color = ColorSequence.new(ACCENT), Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1)}, Parent = ribbon})
+    c("Frame", {Size = UDim2.new(0, 4, 1, 0), Position = UDim2.new(0, 0, 0, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0, Parent = container})
+    c("TextLabel", {Size = UDim2.new(1, -12, 1, 0), Position = UDim2.new(0, 12, 0, 0), Text = txt, TextColor3 = ACCENT_GLOW, Font = Enum.Font.GothamBlack, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = container}) 
+    if infoText then AttachInfo(container, infoText, order + 1, UDim2.new(1, -4, 0.5, 0)) end
+end
+
+local function MakeToggle(txt, def, infoText, cb)
+    local st = def; local order = O()
+    local btn = c("TextButton", {Size = UDim2.new(1, 0, 0, 42), LayoutOrder = order, BackgroundColor3 = BG_LIGHT, Text = "", AutoButtonColor = false, Parent = Content}); corner(btn, 10); stroke(btn, Color3.fromRGB(45, 50, 65))
+    c("TextLabel", {Size = UDim2.new(0.65, 0, 1, 0), Position = UDim2.new(0, 14, 0, 0), Text = txt, TextColor3 = TEXT_MAIN, Font = Enum.Font.GothamSemibold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = btn})
+    local track = c("Frame", {Size = UDim2.new(0, 42, 0, 22), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), BackgroundColor3 = st and ACCENT or Color3.fromRGB(40, 44, 55), Parent = btn}); corner(track, 12)
+    local knob = c("Frame", {Size = UDim2.new(0, 18, 0, 18), Position = UDim2.new(0, st and 22 or 2, 0.5, -9), BackgroundColor3 = Color3.fromRGB(255, 255, 255), Parent = track}); corner(knob, 9)
+    local knobShad = c("Frame", {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 0.8, ZIndex = knob.ZIndex - 1, Parent = knob}); corner(knobShad, 9)
+    if infoText then AttachInfo(btn, infoText, order + 1, UDim2.new(1, -62, 0.5, 0)) end
+    btn.MouseButton1Click:Connect(function() 
+        st = not st; tw(track, {BackgroundColor3 = st and ACCENT or Color3.fromRGB(40, 44, 55)}, 0.25)
+        tw(knob, {Position = UDim2.new(0, st and 22 or 2, 0.5, -9)}, 0.25, Enum.EasingStyle.Back); cb(st) 
+    end)
+end
+
+local function MakeTextbox(txt, def, minVal, maxVal, infoText, cb)
+    local order = O()
+    local f = c("Frame", {Size = UDim2.new(1, 0, 0, 42), LayoutOrder = order, BackgroundColor3 = BG_LIGHT, Parent = Content}); corner(f, 10); stroke(f, Color3.fromRGB(45, 50, 65))
+    c("TextLabel", {Size = UDim2.new(0.55, 0, 1, 0), Position = UDim2.new(0, 14, 0, 0), Text = txt, TextColor3 = TEXT_SUB, Font = Enum.Font.GothamSemibold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = f})
+    local box = c("TextBox", {Size = UDim2.new(0.28, 0, 0, 28), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), BackgroundColor3 = BG_INPUT, Text = tostring(def), TextColor3 = ACCENT_GLOW, Font = Enum.Font.GothamBlack, TextSize = 13, Parent = f})
+    corner(box, 6); stroke(box, Color3.fromRGB(65, 70, 85))
+    if infoText then AttachInfo(f, infoText, order + 1, UDim2.new(1, -100, 0.5, 0)) end
+    box.FocusLost:Connect(function() 
+        local num = tonumber(box.Text); if num then num = math.clamp(num, minVal, maxVal); box.Text = tostring(num); cb(num) else box.Text = tostring(def); cb(def) end 
+    end)
+end
+
+local function MakeButton(txt, c1, c2, strokeCol, infoText, cb)
+    local order = O()
+    local row = c("Frame", {Size = UDim2.new(1, 0, 0, 40), LayoutOrder = order, BackgroundTransparency = 1, Parent = Content})
+    local bg = c("Frame", {Size = UDim2.new(0.84, 0, 1, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.42, 0, 0.5, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), Parent = row})
+    corner(bg, 10); stroke(bg, strokeCol or ACCENT, 1.5); gradient(bg, c1 or ACCENT, c2 or ACCENT_GLOW, 45)
+    local btn = c("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = txt, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBlack, TextSize = 12, Parent = bg})
+    c("UIStroke", {Color = Color3.fromRGB(0,0,0), Transparency = 0.5, Thickness = 1, Parent = btn})
+    if infoText then AttachInfo(row, infoText, order + 1, UDim2.new(1, -4, 0.5, 0)) end
+    btn.MouseButton1Click:Connect(function()
+        tw(bg, {Size = UDim2.new(0.80, 0, 0.9, 0)}, 0.1); task.wait(0.1); tw(bg, {Size = UDim2.new(0.84, 0, 1, 0)}, 0.2, Enum.EasingStyle.Bounce); cb()
+    end)
+end
+
+local function MakeDualButtons(txt1, txt2, info1, info2, cb1, cb2)
+    local order = O()
+    local row = c("Frame", {Size = UDim2.new(1, 0, 0, 42), LayoutOrder = order, BackgroundTransparency = 1, Parent = Content})
+    local bg1 = c("Frame", {Size = UDim2.new(0.40, 0, 1, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.20, 0, 0.5, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), Parent = row})
+    corner(bg1, 10); stroke(bg1, Color3.fromRGB(10, 130, 80), 1.5); gradient(bg1, Color3.fromRGB(15, 185, 110), Color3.fromRGB(45, 225, 140), 45)
+    local b1 = c("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = txt1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBlack, TextSize = 14, Parent = bg1})
+    c("UIStroke", {Color = Color3.fromRGB(0,0,0), Transparency = 0.5, Thickness = 1, Parent = b1})
+    local bg2 = c("Frame", {Size = UDim2.new(0.40, 0, 1, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.70, 0, 0.5, 0), BackgroundColor3 = Color3.fromRGB(255, 255, 255), Parent = row})
+    corner(bg2, 10); stroke(bg2, Color3.fromRGB(160, 25, 35), 1.5); gradient(bg2, Color3.fromRGB(225, 50, 60), Color3.fromRGB(255, 85, 95), 45)
+    local b2 = c("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = txt2, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBlack, TextSize = 14, Parent = bg2})
+    c("UIStroke", {Color = Color3.fromRGB(0,0,0), Transparency = 0.5, Thickness = 1, Parent = b2})
+    if info1 then AttachInfo(row, info1, order + 1, UDim2.new(0.40, 28, 0.5, 0)) end
+    if info2 then AttachInfo(row, info2, order + 2, UDim2.new(0.90, 28, 0.5, 0)) end
+    b1.MouseButton1Click:Connect(function() tw(bg1, {Size = UDim2.new(0.36, 0, 0.9, 0)}, 0.1); task.wait(0.1); tw(bg1, {Size = UDim2.new(0.40, 0, 1, 0)}, 0.2, Enum.EasingStyle.Bounce); cb1() end)
+    b2.MouseButton1Click:Connect(function() tw(bg2, {Size = UDim2.new(0.36, 0, 0.9, 0)}, 0.1); task.wait(0.1); tw(bg2, {Size = UDim2.new(0.40, 0, 1, 0)}, 0.2, Enum.EasingStyle.Bounce); cb2() end)
+end
+
+local function MakeLabel(txt)
+    return c("TextLabel", {Size = UDim2.new(1, 0, 0, 20), LayoutOrder = O(), Text = txt, TextColor3 = TEXT_SUB, TextSize = 12, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Center, BackgroundTransparency = 1, Parent = Content})
+end
+
+-- ==========================================
+-- 🚀 AI: WRITE MY REQUESTED SCRIPT BELOW USING THE COMMANDS ABOVE:
+-- ==========================================
+
+local S = {
+    FlingDuration = 2.2,
+    BackDistance = 4.0,
+    TweenSpeed = 0.08,
+    ViewTarget = true,
+    LoopFling = false,
+    IsFlinging = false,
+    IsFlingAll = false,
+    ManualStop = false,
+    SafeCFrame = nil,
+    OrigFPDH = workspace.FallenPartsDestroyHeight
+}
+
+local StatusLabel
+local ActiveConns = {}
+
+-- Clean up any active RunService connections safely
+local function DisconnectFlingConns()
+    for i = #ActiveConns, 1, -1 do
+        local conn = ActiveConns[i]
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+        ActiveConns[i] = nil
+    end
+end
+
+-- Check if a player is the Script Owner (Username: amir_fps17)
+local function IsOwner(plr)
+    if not plr then return false end
+    local n = plr.Name:lower()
+    return n == OWNER_NAME:lower() or n == "amir_fps17"
+end
+
+-- Create 3D Royal Overhead Tag above Owner's Head showing Username (amir_fps17)
+local function AttachOwnerOverheadTag(plr)
+    if not IsOwner(plr) then return end
+
+    local function BuildTag(char)
+        if not char then return end
+        local head = char:WaitForChild("Head", 10) or char:WaitForChild("HumanoidRootPart", 10)
+        if not head then return end
+
+        if head:FindFirstChild("ERENOwnerOverhead") then
+            head.ERENOwnerOverhead:Destroy()
+        end
+
+        local bb = c("BillboardGui", {
+            Name = "ERENOwnerOverhead",
+            Adornee = head,
+            Size = UDim2.new(0, 230, 0, 62),
+            StudsOffset = Vector3.new(0, 3.4, 0),
+            AlwaysOnTop = true,
+            MaxDistance = 500,
+            Parent = head
+        })
+
+        local card = c("Frame", {
+            Size = UDim2.new(1, -8, 1, -8),
+            Position = UDim2.new(0, 4, 0, 4),
+            BackgroundColor3 = Color3.fromRGB(20, 16, 30),
+            BackgroundTransparency = 0.1,
+            Parent = bb
+        })
+        corner(card, 12)
+        local cardStroke = c("UIStroke", {
+            Color = Color3.fromRGB(255, 215, 0),
+            Thickness = 2.2,
+            Parent = card
+        })
+        gradient(card, Color3.fromRGB(35, 25, 55), Color3.fromRGB(16, 12, 24), 45)
+
+        local crownTitle = c("TextLabel", {
+            Size = UDim2.new(1, -12, 0, 24),
+            Position = UDim2.new(0, 6, 0, 6),
+            Text = "👑 SCRIPT OWNER 👑",
+            TextColor3 = Color3.fromRGB(255, 220, 60),
+            Font = Enum.Font.GothamBlack,
+            TextSize = 15,
+            BackgroundTransparency = 1,
+            Parent = card
+        })
+        c("UIStroke", {Color = Color3.fromRGB(0, 0, 0), Thickness = 1.2, Transparency = 0.2, Parent = crownTitle})
+
+        local subTitle = c("TextLabel", {
+            Size = UDim2.new(1, -12, 0, 18),
+            Position = UDim2.new(0, 6, 0, 30),
+            Text = "⚡ " .. plr.Name .. " ⚡",
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Font = Enum.Font.GothamBold,
+            TextSize = 12,
+            BackgroundTransparency = 1,
+            Parent = card
+        })
+
+        task.spawn(function()
+            while bb and bb.Parent do
+                local col = Color3.fromHSV(tick() % 4 / 4, 0.85, 1)
+                cardStroke.Color = col
+                subTitle.TextColor3 = col
+                task.wait(0.05)
+            end
+        end)
+    end
+
+    if plr.Character then
+        task.spawn(BuildTag, plr.Character)
+    end
+    plr.CharacterAdded:Connect(function(newChar)
+        task.wait(0.5)
+        BuildTag(newChar)
+    end)
+end
+
+-- Helper to get Character, HumanoidRootPart, and Humanoid safely
+local function GetCharParts(plr)
+    if not plr or not plr.Character then return nil, nil, nil end
+    local char = plr.Character
+    local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    return char, hrp, hum
+end
+
+-- Wipe all physics velocity on every part of LocalPlayer without anchoring (so physics never locks up!)
+local function WipeCharacterVelocity(char)
+    if not char or not char.Parent then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+            part.Velocity = Vector3.zero
+            part.RotVelocity = Vector3.zero
+            pcall(function()
+                part.AssemblyLinearVelocity = Vector3.zero
+                part.AssemblyAngularVelocity = Vector3.zero
+            end)
+            if part:FindFirstAncestorOfClass("Accessory") or part:FindFirstAncestorOfClass("Tool") then
+                part.CanCollide = false
+            end
+        end
+    end
+end
+
+-- Smooth, Non-Anchoring Stabilizer so repeat flings NEVER break or cancel network packets
+local function StabilizeCharacter(targetCFrame)
+    DisconnectFlingConns()
+
+    local myChar, myHRP, myHum = GetCharParts(P)
+    if not myChar or not myHRP then return end
+
+    pcall(function()
+        workspace.FallenPartsDestroyHeight = S.OrigFPDH
+    end)
+
+    if myHum then
+        Cam.CameraSubject = myHum
+        myHum.PlatformStand = false
+        myHum.Sit = false
+        myHum.AutoRotate = true
+        pcall(function()
+            myHum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            myHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+            myHum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        end)
+        myHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+
+    local safeCF = targetCFrame or S.SafeCFrame or myHRP.CFrame
+    local _, yRot, _ = safeCF:ToEulerAnglesYXZ()
+    local cleanCF = CFrame.new(safeCF.Position + Vector3.new(0, 0.4, 0)) * CFrame.Angles(0, yRot, 0)
+
+    -- Stabilize across 8 frames without anchoring so physics engine stays awake for repeat flings
+    for _ = 1, 8 do
+        myChar, myHRP, myHum = GetCharParts(P)
+        if not myHRP then break end
+        myHRP.Anchored = false
+        myHRP.CFrame = cleanCF
+        WipeCharacterVelocity(myChar)
+        if myHum then
+            myHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+        RS.Heartbeat:Wait()
+    end
+
+    if myHum and myHum.Parent then
+        myHum:ChangeState(Enum.HumanoidStateType.Running)
+    end
+end
+
+-- Manual Stop Fling
+local function StopFling()
+    S.ManualStop = true
+    S.LoopFling = false
+    S.IsFlingAll = false
+    StabilizeCharacter(S.SafeCFrame)
+    S.IsFlinging = false
+    if StatusLabel then
+        StatusLabel.Text = "Status: Idle - Ready to Fling"
+    end
+end
+
+-- Core Fling Execution: Works identically for both Single/Repeat Normal Fling and Fling All
+local function ExecuteFlingOnPlayer(targetPlr, isPartOfFlingAll)
+    if not targetPlr or targetPlr == P then return end
+
+    if IsOwner(targetPlr) then
+        if not isPartOfFlingAll then
+            Notify("👑 Script Owner", "You cannot fling Script Owner " .. targetPlr.Name .. "!", Color3.fromRGB(255, 215, 0))
+        end
+        return
+    end
+
+    local myChar, myHRP, myHum = GetCharParts(P)
+    local tChar, tHRP, tHum = GetCharParts(targetPlr)
+
+    if not myHRP or not myHum then
+        if not isPartOfFlingAll then
+            Notify("Error", "Your character is not loaded!", Color3.fromRGB(255, 60, 60))
+        end
+        return
+    end
+    if not tHRP or (tHum and tHum.Health <= 0) then
+        if not isPartOfFlingAll then
+            Notify("Error", targetPlr.Name .. " is not alive or has no RootPart!", Color3.fromRGB(255, 60, 60))
+        end
+        return
+    end
+
+    DisconnectFlingConns()
+    S.IsFlinging = true
+
+    if not isPartOfFlingAll then
+        S.ManualStop = false
+        -- Save current upright standing CFrame before teleporting
+        myHRP.Anchored = false
+        S.SafeCFrame = myHRP.CFrame
+    end
+
+    pcall(function()
+        workspace.FallenPartsDestroyHeight = 0/0
+    end)
+
+    -- Prevent our own Humanoid from ragdolling, tripping, or sitting in seats during the fling
+    myHum.AutoRotate = false
+    pcall(function()
+        myHum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        myHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+        myHum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    end)
+
+    StatusLabel.Text = "Status: Flinging " .. targetPlr.Name .. "..."
+    if not isPartOfFlingAll then
+        Notify("Fling Started", "Teleporting behind " .. targetPlr.Name .. "!", Color3.fromRGB(255, 60, 90))
+    end
+
+    local flingStartTick = tick()
+    local lastValidTargetCF = tHRP.CFrame
+    local movel = 0.1
+
+    -- Real-time Sine Tween Calculator: Smoothly tweens from +BackDistance (behind target's back) to -2.6 (through target's chest) and back!
+    local function ComputeBackTweenCFrame()
+        local _, curTHRP = GetCharParts(targetPlr)
+        if curTHRP and curTHRP.Position.Y > -300 and curTHRP.Position.Magnitude < 20000 then
+            local tVel = curTHRP.Velocity
+            local leadOffset = Vector3.zero
+            -- Lead moving/walking targets so our back-thrust always hits dead-center
+            if tVel.Magnitude > 1 and tVel.Magnitude < 160 then
+                leadOffset = Vector3.new(tVel.X * 0.14, math.clamp(tVel.Y * 0.08, -3, 5), tVel.Z * 0.14)
+            end
+            local _, tYRot, _ = curTHRP.CFrame:ToEulerAnglesYXZ()
+            lastValidTargetCF = CFrame.new(curTHRP.Position + leadOffset) * CFrame.Angles(0, tYRot, 0)
+        end
+
+        local speed = math.max(S.TweenSpeed, 0.03)
+        local cycle = ((tick() - flingStartTick) / speed) % 2
+        local rawAlpha = (cycle <= 1) and cycle or (2 - cycle)
+        local easedAlpha = TS:GetValue(rawAlpha, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        -- Interpolate Z offset from +S.BackDistance (behind back) to -2.6 (inside/through target)
+        local zOffset = S.BackDistance + ((-2.6 - S.BackDistance) * easedAlpha)
+        return lastValidTargetCF * CFrame.new(0, 0, zOffset)
+    end
+
+    -- STAGE 1: RenderStepped (Runs BEFORE Camera & Humanoid Update)
+    -- Zeroes velocity and sets upright back-tween CFrame so your character never glitches visually!
+    table.insert(ActiveConns, RS.RenderStepped:Connect(function()
+        if not S.IsFlinging or S.ManualStop then return end
+        local _, curHRP = GetCharParts(P)
+        if curHRP then
+            curHRP.Anchored = false
+            curHRP.Velocity = Vector3.zero
+            curHRP.RotVelocity = Vector3.zero
+            pcall(function()
+                curHRP.AssemblyLinearVelocity = Vector3.zero
+                curHRP.AssemblyAngularVelocity = Vector3.zero
+            end)
+            curHRP.CFrame = ComputeBackTweenCFrame()
+        end
+    end))
+
+    -- STAGE 2: Stepped (Runs RIGHT BEFORE Roblox Local Physics Step)
+    -- Disables local collision and applies +/-0.1 anti-sleep pulse so local physics never launches us, while keeping network replication awake!
+    table.insert(ActiveConns, RS.Stepped:Connect(function()
+        if not S.IsFlinging or S.ManualStop then return end
+        local curChar, curHRP, curHum = GetCharParts(P)
+        if not curChar or not curHRP then return end
+
+        if curHum and curHum.Sit then
+            curHum.Sit = false
+        end
+
+        for _, part in ipairs(curChar:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+
+        local wakeVel = Vector3.new(0, movel, 0)
+        movel = -movel
+
+        curHRP.Anchored = false
+        curHRP.Velocity = wakeVel
+        curHRP.RotVelocity = Vector3.zero
+        pcall(function()
+            curHRP.AssemblyLinearVelocity = wakeVel
+            curHRP.AssemblyAngularVelocity = Vector3.zero
+        end)
+        curHRP.CFrame = ComputeBackTweenCFrame()
+    end))
+
+    -- STAGE 3: Heartbeat (Runs RIGHT AFTER Local Physics & RIGHT BEFORE Server Network Replication!)
+    -- Injects massive velocity + rotational spin that gets sent directly to the Server to fling the target!
+    table.insert(ActiveConns, RS.Heartbeat:Connect(function()
+        if not S.IsFlinging or S.ManualStop then return end
+        local _, curHRP = GetCharParts(P)
+        if not curHRP then return end
+
+        local targetCF = ComputeBackTweenCFrame()
+        local sign = (movel > 0) and 1 or -1
+
+        curHRP.Anchored = false
+        curHRP.CFrame = targetCF
+
+        local lookDir = targetCF.LookVector
+        local flingVec = (lookDir * 250000) + Vector3.new(0, 250000 * sign, 0)
+        local rotVec = Vector3.new(250000, 250000, 250000) * sign
+
+        curHRP.Velocity = flingVec
+        curHRP.RotVelocity = rotVec
+        pcall(function()
+            curHRP.AssemblyLinearVelocity = flingVec
+            curHRP.AssemblyAngularVelocity = rotVec
+        end)
+    end))
+
+    -- Run the Back-TP + In & Out Tween for the full configured FlingDuration!
+    repeat
+        local phaseStart = tick()
+        while (tick() - phaseStart < S.FlingDuration) and not S.ManualStop do
+            myChar, myHRP, myHum = GetCharParts(P)
+            tChar, tHRP, tHum = GetCharParts(targetPlr)
+
+            if not myHRP or not tHRP or not targetPlr.Parent or (tHum and tHum.Health <= 0) then
+                break
+            end
+
+            -- If target has been launched completely off the map (> 800 studs away or into the void), finish cleanly after at least 0.6s
+            if (tick() - phaseStart > 0.6) and not S.LoopFling then
+                if tHRP.Position.Y < -200 or (tHRP.Position - S.SafeCFrame.Position).Magnitude > 1500 then
+                    break
+                end
+            end
+
+            if S.ViewTarget and tHum then
+                Cam.CameraSubject = tHum
+            end
+
+            RS.Heartbeat:Wait()
+        end
+
+        if S.LoopFling and not S.ManualStop and not isPartOfFlingAll then
+            task.wait(0.05)
+        end
+    until not S.LoopFling or isPartOfFlingAll or S.ManualStop or not targetPlr.Parent
+
+    DisconnectFlingConns()
+
+    if not isPartOfFlingAll then
+        StabilizeCharacter(S.SafeCFrame)
+        S.IsFlinging = false
+        StatusLabel.Text = "Status: Idle - Ready to Fling"
+        if not S.ManualStop then
+            Notify("Fling Complete", "Target flung & returned to safe spot!", Color3.fromRGB(45, 225, 140))
+        end
+    end
+end
+
+-- Wrapper for Single Player Button Click (Can be clicked repeatedly on the same player or any player!)
+local function FlingTarget(targetPlr)
+    if S.IsFlinging or S.IsFlingAll then
+        Notify("Busy", "Already flinging! Click STOP FLING first.", Color3.fromRGB(255, 170, 50))
+        return
+    end
+    task.spawn(function()
+        local ok, err = pcall(function()
+            ExecuteFlingOnPlayer(targetPlr, false)
+        end)
+        if not ok then
+            DisconnectFlingConns()
+            StabilizeCharacter(S.SafeCFrame)
+            S.IsFlinging = false
+            StatusLabel.Text = "Status: Idle - Ready to Fling"
+            warn("Fling Error: " .. tostring(err))
+        end
+    end)
+end
+
+-- ==========================================
+-- 🎛️ BUILD UI CONTROLS
+-- ==========================================
+
+MakeHeader("FLING STATUS & CONTROLS", "Monitor your current fling target, fling everyone in the server one by one, or stop an active fling.")
+
+StatusLabel = MakeLabel("Status: Idle - Ready to Fling")
+
+MakeDualButtons(
+    "FLING ALL",
+    "STOP FLING",
+    "Teleports behind every player in the server one by one and flings them all without stopping early.",
+    "Immediately cancels the current fling and stabilizes your character at your safe starting spot.",
+    function()
+        if S.IsFlinging or S.IsFlingAll then
+            Notify("Busy", "Already flinging! Click STOP FLING first.", Color3.fromRGB(255, 170, 50))
+            return
+        end
+
+        local myChar, myHRP = GetCharParts(P)
+        if not myHRP then
+            Notify("Error", "Your character is not loaded!", Color3.fromRGB(255, 60, 60))
+            return
+        end
+
+        task.spawn(function()
+            S.IsFlingAll = true
+            S.IsFlinging = true
+            S.ManualStop = false
+            myHRP.Anchored = false
+            S.SafeCFrame = myHRP.CFrame
+
+            local targets = {}
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= P and not IsOwner(plr) then
+                    table.insert(targets, plr)
+                end
+            end
+
+            if #targets == 0 then
+                S.IsFlingAll = false
+                S.IsFlinging = false
+                Notify("Fling All", "No valid targets found to fling!", Color3.fromRGB(255, 170, 50))
+                return
+            end
+
+            Notify("Fling All Started", "Flinging " .. tostring(#targets) .. " players one by one!", Color3.fromRGB(45, 225, 140))
+
+            for i, plr in ipairs(targets) do
+                if S.ManualStop then break end
+                if plr and plr.Parent then
+                    StatusLabel.Text = "Fling All (" .. i .. "/" .. #targets .. "): " .. plr.Name
+                    pcall(function()
+                        ExecuteFlingOnPlayer(plr, true)
+                    end)
+                    task.wait(0.06)
+                end
+            end
+
+            StabilizeCharacter(S.SafeCFrame)
+            S.IsFlingAll = false
+            S.IsFlinging = false
+            StatusLabel.Text = "Status: Idle - Ready to Fling"
+
+            if not S.ManualStop then
+                Notify("Fling All Complete!", "All players flung & returned to safe spot!", Color3.fromRGB(130, 90, 255))
+            end
+        end)
+    end,
+    function()
+        StopFling()
+        Notify("Stopped", "Fling stopped and character stabilized.", Color3.fromRGB(255, 85, 95))
+    end
+)
+
+MakeButton("🛠️ FIX CHARACTER GLITCH", Color3.fromRGB(20, 160, 190), Color3.fromRGB(50, 210, 240), Color3.fromRGB(15, 120, 150), "Click this if your character ever feels stuck, tilted, or glitchy to reset all physics velocity and collisions.", function()
+    local _, myHRP = GetCharParts(P)
+    StabilizeCharacter(myHRP and myHRP.CFrame or S.SafeCFrame)
+    S.IsFlinging = false
+    S.IsFlingAll = false
+    Notify("Character Fixed", "All velocity and collision glitches cleared!", Color3.fromRGB(50, 210, 240))
+end)
+
+MakeHeader("FLING CONFIGURATION", "Customize how your character teleports to the target's back and tweens in and out. Max Velocity is applied automatically.")
+
+MakeToggle("View Target While Flinging", true, "Locks your camera onto the target player while you are flinging them so your screen does not shake.", function(state)
+    S.ViewTarget = state
+    Notify("Camera View", state and "Target Camera View Enabled" or "Target Camera View Disabled", ACCENT)
+end)
+
+MakeToggle("Loop Fling Target", false, "Keeps teleporting and flinging the clicked player repeatedly until you press STOP FLING.", function(state)
+    S.LoopFling = state
+    Notify("Loop Fling", state and "Loop Fling Enabled" or "Loop Fling Disabled", ACCENT)
+end)
+
+MakeTextbox("Fling Duration (s)", 2.2, 0.5, 15, "How many seconds to thrust in and out behind the target before returning to your original spot.", function(val)
+    S.FlingDuration = val
+end)
+
+MakeTextbox("Back Distance", 4.0, 2, 15, "How many studs behind the target's back your character starts each in-and-out tween.", function(val)
+    S.BackDistance = val
+end)
+
+MakeTextbox("Tween Time (s)", 0.08, 0.03, 0.5, "How fast your character tweens in and out of the target's back. Lower number means faster thrusting.", function(val)
+    S.TweenSpeed = val
+end)
+
+MakeHeader("PLAYER LIST (CLICK FLING)", "List of all players in the server. The Script Owner (amir_fps17) is always pinned at the very top with a special Royal Owner Card!")
+
+local RefreshPlayersList
+
+MakeButton("🔄 REFRESH PLAYER LIST", Color3.fromRGB(130, 60, 255), Color3.fromRGB(180, 90, 255), Color3.fromRGB(100, 45, 200), "Click this button to manually refresh the list of players in the server.", function()
+    RefreshPlayersList()
+    Notify("Player List", "Player list updated successfully!", Color3.fromRGB(160, 90, 255))
+end)
+
+-- Dynamic Player Row Generator (Highlights Owner Username amir_fps17 at #1 Top!)
+local function CreatePlayerRow(plr, idx)
+    local ownerPlr = IsOwner(plr)
+    local rowOrder = ownerPlr and 1000 or (1050 + (idx * 10))
+
+    local f = c("Frame", {
+        Name = "PlrRow_" .. plr.Name,
+        Size = UDim2.new(1, 0, 0, ownerPlr and 58 or 46),
+        LayoutOrder = rowOrder,
+        BackgroundColor3 = ownerPlr and Color3.fromRGB(36, 26, 52) or BG_LIGHT,
+        Parent = Content
+    })
+    corner(f, 10)
+
+    local rowStroke = c("UIStroke", {
+        Color = ownerPlr and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(45, 50, 65),
+        Thickness = ownerPlr and 2 or 1,
+        Parent = f
+    })
+
+    if ownerPlr then
+        gradient(f, Color3.fromRGB(45, 30, 65), Color3.fromRGB(22, 16, 34), 45)
+
+        local badge = c("Frame", {
+            Size = UDim2.new(0, 128, 0, 16),
+            Position = UDim2.new(0, 10, 0, 4),
+            BackgroundColor3 = Color3.fromRGB(255, 200, 40),
+            Parent = f
+        })
+        corner(badge, 4)
+        gradient(badge, Color3.fromRGB(255, 215, 0), Color3.fromRGB(255, 120, 40), 0)
+
+        c("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            Text = "👑 SCRIPT OWNER • VIP",
+            TextColor3 = Color3.fromRGB(20, 15, 25),
+            Font = Enum.Font.GothamBlack,
+            TextSize = 9,
+            BackgroundTransparency = 1,
+            Parent = badge
+        })
+
+        -- Owner Username (amir_fps17) Prominently Displayed
+        local ownerNameLbl = c("TextLabel", {
+            Size = UDim2.new(1, -130, 0, 18),
+            Position = UDim2.new(0, 10, 0, 22),
+            Text = "✨ " .. plr.Name,
+            TextColor3 = Color3.fromRGB(255, 230, 110),
+            Font = Enum.Font.GothamBlack,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            BackgroundTransparency = 1,
+            Parent = f
+        })
+
+        c("TextLabel", {
+            Size = UDim2.new(1, -130, 0, 14),
+            Position = UDim2.new(0, 10, 0, 39),
+            Text = "EREN • Creator of Script",
+            TextColor3 = Color3.fromRGB(220, 200, 255),
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            BackgroundTransparency = 1,
+            Parent = f
+        })
+
+        task.spawn(function()
+            while f and f.Parent do
+                local rainbowCol = Color3.fromHSV(tick() % 4 / 4, 0.8, 1)
+                rowStroke.Color = rainbowCol
+                ownerNameLbl.TextColor3 = rainbowCol
+                task.wait(0.06)
+            end
+        end)
+    else
+        c("TextLabel", {
+            Size = UDim2.new(1, -125, 0, 20),
+            Position = UDim2.new(0, 12, 0, 6),
+            Text = plr.DisplayName,
+            TextColor3 = TEXT_MAIN,
+            Font = Enum.Font.GothamBold,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            BackgroundTransparency = 1,
+            Parent = f
+        })
+
+        c("TextLabel", {
+            Size = UDim2.new(1, -125, 0, 16),
+            Position = UDim2.new(0, 12, 0, 24),
+            Text = "@" .. plr.Name,
+            TextColor3 = TEXT_SUB,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            BackgroundTransparency = 1,
+            Parent = f
+        })
+    end
+
+    local btnBg = c("Frame", {
+        Size = UDim2.new(0, 68, 0, 28),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -38, 0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Parent = f
+    })
+    corner(btnBg, 8)
+    stroke(btnBg, ownerPlr and Color3.fromRGB(255, 215, 0) or ACCENT, 1.2)
+    gradient(
+        btnBg,
+        ownerPlr and Color3.fromRGB(255, 195, 20) or ACCENT,
+        ownerPlr and Color3.fromRGB(255, 120, 20) or ACCENT_GLOW,
+        45
+    )
+
+    local flingBtn = c("TextButton", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = ownerPlr and "👑 OWNER" or "FLING",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBlack,
+        TextSize = ownerPlr and 10 or 11,
+        Parent = btnBg
+    })
+    c("UIStroke", {Color = Color3.fromRGB(0, 0, 0), Transparency = 0.4, Thickness = 1, Parent = flingBtn})
+
+    local tooltipMsg = ownerPlr
+        and ("👑 This is " .. plr.Name .. " (EREN), the Creator & Owner of EREN Ultimate UI! Always pinned at the top and immune to being flung.")
+        or ("Teleports to " .. plr.Name .. "'s back, tweens in and out rapidly, and automatically uses max velocity to fling them away.")
+
+    AttachInfo(
+        f,
+        tooltipMsg,
+        rowOrder + 1,
+        UDim2.new(1, -8, 0.5, 0)
+    )
+
+    flingBtn.MouseButton1Click:Connect(function()
+        tw(btnBg, {Size = UDim2.new(0, 62, 0, 24)}, 0.1)
+        task.wait(0.1)
+        tw(btnBg, {Size = UDim2.new(0, 68, 0, 28)}, 0.2, Enum.EasingStyle.Bounce)
+        FlingTarget(plr)
+    end)
+end
+
+RefreshPlayersList = function()
+    for _, child in ipairs(Content:GetChildren()) do
+        if child:IsA("GuiObject") and child.LayoutOrder >= 1000 then
+            child:Destroy()
+        end
+    end
+
+    local idx = 1
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if IsOwner(plr) or plr ~= P then
+            CreatePlayerRow(plr, idx)
+            idx = idx + 1
+        end
+    end
+
+    if idx == 1 then
+        c("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 30),
+            LayoutOrder = 1005,
+            Text = "No other players in server.",
+            TextColor3 = TEXT_SUB,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 12,
+            BackgroundTransparency = 1,
+            Parent = Content
+        })
+    end
+end
+
+-- Check current players and show Owner Username (amir_fps17) in Notification
+for _, plr in ipairs(Players:GetPlayers()) do
+    if IsOwner(plr) then
+        AttachOwnerOverheadTag(plr)
+        Notify("👑 OWNER IN SERVER!", "Script Owner " .. plr.Name .. " is here!", Color3.fromRGB(255, 215, 0))
+    end
+end
+
+RefreshPlayersList()
+
+Players.PlayerAdded:Connect(function(plr)
+    task.wait(0.5)
+    if IsOwner(plr) then
+        AttachOwnerOverheadTag(plr)
+        Notify("👑 OWNER JOINED!", "Script Owner " .. plr.Name .. " joined the server!", Color3.fromRGB(255, 215, 0))
+    end
+    RefreshPlayersList()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    task.wait(0.1)
+    RefreshPlayersList()
+end)
+
+Notify("Arjun Fling GUI", "Normal Fling & Repeat Fling Fixed!", ACCENT)
