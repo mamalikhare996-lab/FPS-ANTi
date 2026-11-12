@@ -5,8 +5,8 @@ local TS = game:GetService("TweenService")
 
 if CG:FindFirstChild("DeltaUltimateUI") then CG.DeltaUltimateUI:Destroy() end
 
-local OWNER_NAME = "GG_gamerz002"
-local SCRIPT_TITLE = "🌪️ ARJUN FLING GUI" -- AI: Change this title based on the game!
+local OWNER_NAME = "amir_fps17"
+local SCRIPT_TITLE = "🌪️ EREN FLING " -- AI: Change this title based on the game!
 
 local ACCENT = Color3.fromRGB(255, 60, 90)
 local ACCENT_GLOW = Color3.fromRGB(255, 110, 70)
@@ -20,7 +20,7 @@ local function tw(obj, props, time, style)
     TS:Create(obj, TweenInfo.new(time or 0.3, style or Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
 end
 local function c(cls, props)
-    local i = Instance.new(cls); for k, v in pairs(props) do i[k] = v end; return i
+    local i = Instance.new(cls); for k, v in pamir_fps17airs(props) do i[k] = v end; return i
 end
 local function corner(p, r) c("UICorner", {CornerRadius = UDim.new(0, r or 8), Parent = p}) end
 local function stroke(p, col, thick) c("UIStroke", {Color = col or Color3.fromRGB(40, 45, 60), Thickness = thick or 1, Parent = p}) end
@@ -29,9 +29,9 @@ local function gradient(p, c1, c2, rot) c("UIGradient", {Color = ColorSequence.n
 local Gui = c("ScreenGui", {Name = "DeltaUltimateUI", ResetOnSpawn = false, Parent = pcall(function() return CG end) and CG or P:WaitForChild("PlayerGui")})
 
 local NotifContainer = c("Frame", {Size = UDim2.new(0, 260, 1, -100), Position = UDim2.new(0, 15, 0, 50), BackgroundTransparency = 1, Parent = Gui})
-c("UIListLayout", {Padding = UDim.new(0, 12), VerticalAlignment = Enum.VerticalAlignment.Top, Parent = NotifContainer})
+c("UIListLayout", {Padding = UDamir_fps17im.new(0, 12), VerticalAlignment = Enum.VerticalAlignment.Top, Parent = NotifContainer})
 
-local function Notify(title, msg, color)
+local function Notify(title, msg, color)amir_fps17
     local wrapper = c("Frame", {Size = UDim2.new(1, 0, 0, 65), BackgroundTransparency = 1, Parent = NotifContainer})
     local notif = c("Frame", {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(-1.5, 0, 0, 0), BackgroundColor3 = BG_DARK, Parent = wrapper})
     corner(notif, 12); stroke(notif, Color3.fromRGB(45, 50, 65), 1.5)
@@ -54,7 +54,7 @@ local Top = c("Frame", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = Color3
 local Title = c("TextLabel", {Size = UDim2.new(1, -40, 0, 22), Position = UDim2.new(0, 16, 0, 8), Text = SCRIPT_TITLE, TextColor3 = Color3.fromRGB(255, 255, 255), TextSize = 16, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Top})
 gradient(Title, ACCENT, ACCENT_GLOW, 0)
 
-local SubLbl = c("TextLabel", {Size = UDim2.new(1, -40, 0, 12), Position = UDim2.new(0, 16, 0, 30), Text = "Made By Arjun (User: GG_gamerz002)", TextSize = 9, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Top})
+local SubLbl = c("TextLabel", {Size = UDim2.new(1, -40, 0, 12), Position = UDim2.new(0, 16, 0, 30), Text = "Made By EREN (User: )", TextSize = 9, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Top})
 task.spawn(function() while task.wait() do SubLbl.TextColor3 = Color3.fromHSV(tick() % 4 / 4, 1, 1) end end)
 
 local MinBtn = c("TextButton", {Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(1, -38, 0, 11), BackgroundColor3 = BG_LIGHT, Text = "-", TextColor3 = Color3.fromRGB(255, 255, 255), TextSize = 16, Font = Enum.Font.GothamBold, Parent = Top, AutoButtonColor = false})
@@ -204,14 +204,14 @@ local function DisconnectFlingConns()
     end
 end
 
--- Check if a player is the Script Owner (Username: GG_gamerz002)
+-- Check if a player is the Script Owner (Username: amir_fps17)
 local function IsOwner(plr)
     if not plr then return false end
     local n = plr.Name:lower()
     return n == OWNER_NAME:lower() or n == "gg_gamer002"
 end
 
--- Create 3D Royal Overhead Tag above Owner's Head showing Username (GG_gamerz002)
+-- Create 3D Royal Overhead Tag above Owner's Head showing Username (amir_fps17)
 local function AttachOwnerOverheadTag(plr)
     if not IsOwner(plr) then return end
 
@@ -220,12 +220,12 @@ local function AttachOwnerOverheadTag(plr)
         local head = char:WaitForChild("Head", 10) or char:WaitForChild("HumanoidRootPart", 10)
         if not head then return end
 
-        if head:FindFirstChild("ArjunOwnerOverhead") then
-            head.ArjunOwnerOverhead:Destroy()
+        if head:FindFirstChild("ERENOwnerOverhead") then
+            head.ERENOwnerOverhead:Destroy()
         end
 
         local bb = c("BillboardGui", {
-            Name = "ArjunOwnerOverhead",
+            Name = "ERENOwnerOverhead",
             Adornee = head,
             Size = UDim2.new(0, 230, 0, 62),
             StudsOffset = Vector3.new(0, 3.4, 0),
@@ -700,7 +700,7 @@ MakeTextbox("Tween Time (s)", 0.08, 0.03, 0.5, "How fast your character tweens i
     S.TweenSpeed = val
 end)
 
-MakeHeader("PLAYER LIST (CLICK FLING)", "List of all players in the server. The Script Owner (GG_gamerz002) is always pinned at the very top with a special Royal Owner Card!")
+MakeHeader("PLAYER LIST (CLICK FLING)", "List of all players in the server. The Script Owner () is always pinned at the very top with a special Royal Owner Card!")
 
 local RefreshPlayersList
 
@@ -709,7 +709,7 @@ MakeButton("🔄 REFRESH PLAYER LIST", Color3.fromRGB(130, 60, 255), Color3.from
     Notify("Player List", "Player list updated successfully!", Color3.fromRGB(160, 90, 255))
 end)
 
--- Dynamic Player Row Generator (Highlights Owner Username GG_gamerz002 at #1 Top!)
+-- Dynamic Player Row Generator (Highlights Owner Username  at #1 Top!)
 local function CreatePlayerRow(plr, idx)
     local ownerPlr = IsOwner(plr)
     local rowOrder = ownerPlr and 1000 or (1050 + (idx * 10))
@@ -751,7 +751,7 @@ local function CreatePlayerRow(plr, idx)
             Parent = badge
         })
 
-        -- Owner Username (GG_gamerz002) Prominently Displayed
+        -- Owner Username () Prominently Displayed
         local ownerNameLbl = c("TextLabel", {
             Size = UDim2.new(1, -130, 0, 18),
             Position = UDim2.new(0, 10, 0, 22),
@@ -768,7 +768,7 @@ local function CreatePlayerRow(plr, idx)
         c("TextLabel", {
             Size = UDim2.new(1, -130, 0, 14),
             Position = UDim2.new(0, 10, 0, 39),
-            Text = "Arjun • Creator of Script",
+            Text = "EREN • Creator of Script",
             TextColor3 = Color3.fromRGB(220, 200, 255),
             Font = Enum.Font.GothamBold,
             TextSize = 10,
@@ -842,7 +842,7 @@ local function CreatePlayerRow(plr, idx)
     c("UIStroke", {Color = Color3.fromRGB(0, 0, 0), Transparency = 0.4, Thickness = 1, Parent = flingBtn})
 
     local tooltipMsg = ownerPlr
-        and ("👑 This is " .. plr.Name .. " (Arjun), the Creator & Owner of Arjun Ultimate UI! Always pinned at the top and immune to being flung.")
+        and ("👑 This is " .. plr.Name .. " (EREN), the Creator & Owner of EREN Ultimate UI! Always pinned at the top and immune to being flung.")
         or ("Teleports to " .. plr.Name .. "'s back, tweens in and out rapidly, and automatically uses max velocity to fling them away.")
 
     AttachInfo(
@@ -889,7 +889,7 @@ RefreshPlayersList = function()
     end
 end
 
--- Check current players and show Owner Username (GG_gamerz002) in Notification
+-- Check current players and show Owner Username (amir_fps17) in Notification
 for _, plr in ipairs(Players:GetPlayers()) do
     if IsOwner(plr) then
         AttachOwnerOverheadTag(plr)
@@ -913,4 +913,4 @@ Players.PlayerRemoving:Connect(function()
     RefreshPlayersList()
 end)
 
-Notify("Arjun Fling GUI", "Normal Fling & Repeat Fling Fixed!", ACCENT)
+Notify("EREN Fling GUI", "Normal Fling & Repeat Fling Fixed!", ACCENT)
