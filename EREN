@@ -1,4 +1,4 @@
---// 🚀 WOLF ANTI BANG FOR DIVINE 🚀 [ALL-IN-ONE CLIENT SYSTEM]
+--// 🚀 ERDIVINEETI BANG FOR DIVINE 🚀 [ALL-IN-ONE CLIENT SYSTEM]
 --// Place inside StarterPlayer -> StarterPlayerScripts (LocalScript)
 
 local Players = game:GetService("Players")
@@ -8,7 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local localPlayer = Players.LocalPlayer
 local TeleportTime = 0.1
-local DISPLAY_TITLE = "🚀 WOLF ANTI BANG FOR DIVINE 🚀"
+local DISPLAY_TITLE = "🚀 EREN SCRIPT 🚀"
 
 -- Setup / Find RemoteEvent cleanly to avoid infinite wait crashes
 local remoteEvent = ReplicatedStorage:FindFirstChild("AntiBangEvent") or ReplicatedStorage:WaitForChild("AntiBangEvent", 5)
