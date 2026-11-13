@@ -1,0 +1,640 @@
+--[=[
+    Filing FPS — Safe UI Demo
+    ---------------------------------------------
+    A client-side Roblox Studio LocalScript demonstrating a draggable floating
+    button, a draggable control panel, target-name validation, a player list,
+    decorative lightning, a cosmetic start toggle, a speed slider, and five
+    selectable visual modes.
+
+    SAFETY / SCOPE:
+    This is a UI-only demo for a place you own or are authorized to develop.
+    It does NOT fling, teleport, attack, or otherwise alter any player's
+    character or physics. The selected target, speed, and mode are UI state only.
+    Place this script as a LocalScript under StarterPlayer > StarterPlayerScripts.
+]=]
+
+--// Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+
+--// Theme
+local COLORS = {
+    background = Color3.fromRGB(12, 15, 24),
+    panel = Color3.fromRGB(19, 23, 35),
+    panel2 = Color3.fromRGB(27, 33, 49),
+    blue = Color3.fromRGB(36, 139, 255),
+    cyan = Color3.fromRGB(81, 217, 255),
+    white = Color3.fromRGB(240, 246, 255),
+    muted = Color3.fromRGB(151, 164, 185),
+    green = Color3.fromRGB(88, 225, 155),
+    red = Color3.fromRGB(255, 102, 116),
+    stroke = Color3.fromRGB(54, 68, 94),
+}
+
+local MODES = {
+    "Mode 1 · Forward / Back",
+    "Mode 2 · Spinner (visual)",
+    "Mode 3 · Orbit (visual)",
+    "Mode 4 · Chaotic (visual)",
+    "Mode 5 · Oscillation (visual)",
+}
+
+local state = {
+    selectedUserId = nil,
+    selectedName = "",
+    active = false,
+    speed = 50,
+    modeIndex = 1,
+    showUsers = false,
+}
+
+--// Small UI helpers
+local function make(className, properties, parent)
+    local instance = Instance.new(className)
+    for key, value in pairs(properties or {}) do
+        instance[key] = value
+    end
+    instance.Parent = parent
+    return instance
+end
+
+local function addCorner(object, radius)
+    make("UICorner", { CornerRadius = UDim.new(0, radius or 10) }, object)
+end
+
+local function addStroke(object, color, thickness, transparency)
+    return make("UIStroke", {
+        Color = color or COLORS.stroke,
+        Thickness = thickness or 1,
+        Transparency = transparency or 0,
+    }, object)
+end
+
+local function addGradient(object, first, second, rotation)
+    return make("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, first),
+            ColorSequenceKeypoint.new(1, second),
+        }),
+        Rotation = rotation or 0,
+    }, object)
+end
+
+local function textLabel(parent, text, size, position, fontSize, color)
+    return make("TextLabel", {
+        BackgroundTransparency = 1,
+        Text = text,
+        Size = size,
+        Position = position,
+        Font = Enum.Font.GothamMedium,
+        TextSize = fontSize or 14,
+        TextColor3 = color or COLORS.white,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+    }, parent)
+end
+
+--// Screen GUI
+local gui = make("ScreenGui", {
+    Name = "FilingFPS_SafeDemo",
+    ResetOnSpawn = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    DisplayOrder = 25,
+}, playerGui)
+
+--// Generic drag behavior for mouse and touch
+local function makeDraggable(handle, movingObject)
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPosition
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPosition = movingObject.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            movingObject.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+--// Toast notifications
+local toast = make("Frame", {
+    Name = "Toast",
+    AnchorPoint = Vector2.new(0.5, 0),
+    Position = UDim2.new(0.5, 0, 0, -60),
+    Size = UDim2.fromOffset(240, 42),
+    BackgroundColor3 = COLORS.panel2,
+    BorderSizePixel = 0,
+    ZIndex = 20,
+}, gui)
+addCorner(toast, 12)
+addStroke(toast, COLORS.blue, 1.2, 0.2)
+local toastText = make("TextLabel", {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    Text = "",
+    TextColor3 = COLORS.white,
+    ZIndex = 21,
+}, toast)
+local toastSerial = 0
+local function showToast(message, isSuccess)
+    toastSerial += 1
+    local thisToast = toastSerial
+    toastText.Text = message
+    toastText.TextColor3 = isSuccess and COLORS.green or COLORS.red
+    TweenService:Create(toast, TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, 0, 0, 18),
+    }):Play()
+    task.delay(2, function()
+        if thisToast == toastSerial and toast.Parent then
+            TweenService:Create(toast, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Position = UDim2.new(0.5, 0, 0, -60),
+            }):Play()
+        end
+    end)
+end
+
+--// Floating icon
+local icon = make("TextButton", {
+    Name = "FilingFPS_Icon",
+    Position = UDim2.new(0, 28, 0.5, -28),
+    Size = UDim2.fromOffset(62, 62),
+    BackgroundColor3 = COLORS.background,
+    BorderSizePixel = 0,
+    Text = "",
+    AutoButtonColor = false,
+    ZIndex = 5,
+}, gui)
+addCorner(icon, 99)
+addStroke(icon, COLORS.cyan, 2, 0.05)
+addGradient(icon, Color3.fromRGB(20, 31, 55), Color3.fromRGB(11, 13, 22), 45)
+local iconBolt = textLabel(icon, "ϟ", UDim2.fromOffset(24, 32), UDim2.new(0.5, -12, 0, 3), 30, COLORS.cyan)
+iconBolt.TextXAlignment = Enum.TextXAlignment.Center
+iconBolt.ZIndex = 6
+local iconCaption = textLabel(icon, "Filing FPS", UDim2.new(1, 0, 0, 14), UDim2.new(0, 0, 1, -16), 8, COLORS.white)
+iconCaption.TextXAlignment = Enum.TextXAlignment.Center
+iconCaption.ZIndex = 6
+makeDraggable(icon, icon)
+
+-- Decorative electric sparks around the icon; visual only.
+local spark = make("TextLabel", {
+    Name = "DecorativeLightning",
+    BackgroundTransparency = 1,
+    Position = UDim2.new(1, -6, 0, -10),
+    Size = UDim2.fromOffset(22, 24),
+    Font = Enum.Font.GothamBlack,
+    Text = "ϟ",
+    TextSize = 24,
+    TextColor3 = COLORS.cyan,
+    TextTransparency = 0.1,
+    ZIndex = 7,
+}, icon)
+local sparkTween = TweenService:Create(spark, TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+    Rotation = 24,
+    TextTransparency = 0.55,
+})
+sparkTween:Play()
+
+--// Main panel
+local panel = make("Frame", {
+    Name = "MainPanel",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 0.5, 0),
+    Size = UDim2.fromOffset(430, 510),
+    BackgroundColor3 = COLORS.panel,
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 2,
+}, gui)
+addCorner(panel, 16)
+addStroke(panel, COLORS.stroke, 1.2, 0.1)
+
+local header = make("Frame", {
+    Name = "Header",
+    Size = UDim2.new(1, 0, 0, 62),
+    BackgroundColor3 = COLORS.panel2,
+    BorderSizePixel = 0,
+    ZIndex = 3,
+}, panel)
+addCorner(header, 16)
+-- Cover the lower rounded corners to make the header look attached to the panel.
+make("Frame", {
+    BorderSizePixel = 0,
+    BackgroundColor3 = COLORS.panel2,
+    Position = UDim2.new(0, 0, 1, -15),
+    Size = UDim2.new(1, 0, 0, 15),
+    ZIndex = 3,
+}, header)
+textLabel(header, "ϟ  FILING FPS", UDim2.new(1, -86, 0, 26), UDim2.new(0, 18, 0, 8), 17, COLORS.white).ZIndex = 4
+textLabel(header, "SAFE UI DEMO  ·  VISUAL CONTROLS ONLY", UDim2.new(1, -40, 0, 18), UDim2.new(0, 19, 0, 34), 9, COLORS.muted).ZIndex = 4
+local closeButton = make("TextButton", {
+    Size = UDim2.fromOffset(30, 30),
+    Position = UDim2.new(1, -42, 0, 15),
+    BackgroundColor3 = Color3.fromRGB(43, 50, 67),
+    BorderSizePixel = 0,
+    Text = "×",
+    TextColor3 = COLORS.white,
+    TextSize = 22,
+    Font = Enum.Font.GothamMedium,
+    AutoButtonColor = true,
+    ZIndex = 5,
+}, header)
+addCorner(closeButton, 9)
+makeDraggable(header, panel)
+
+local content = make("Frame", {
+    Name = "Content",
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 18, 0, 74),
+    Size = UDim2.new(1, -36, 1, -90),
+    ZIndex = 3,
+}, panel)
+
+-- Target name input and validation
+textLabel(content, "TARGET PLAYER", UDim2.new(1, 0, 0, 18), UDim2.new(0, 0, 0, 0), 10, COLORS.muted)
+local nameBox = make("TextBox", {
+    Name = "TargetNameInput",
+    Position = UDim2.new(0, 0, 0, 22),
+    Size = UDim2.new(1, -92, 0, 38),
+    BackgroundColor3 = COLORS.background,
+    BorderSizePixel = 0,
+    PlaceholderText = "Type a player name...",
+    PlaceholderColor3 = COLORS.muted,
+    Text = "",
+    TextColor3 = COLORS.white,
+    TextSize = 13,
+    Font = Enum.Font.Gotham,
+    ClearTextOnFocus = false,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 4,
+}, content)
+addCorner(nameBox, 9)
+addStroke(nameBox, COLORS.stroke, 1, 0.2)
+make("UIPadding", { PaddingLeft = UDim.new(0, 11), PaddingRight = UDim.new(0, 8) }, nameBox)
+local selectButton = make("TextButton", {
+    Position = UDim2.new(1, -82, 0, 22),
+    Size = UDim2.fromOffset(82, 38),
+    BackgroundColor3 = COLORS.blue,
+    BorderSizePixel = 0,
+    Text = "SELECT",
+    TextColor3 = COLORS.white,
+    TextSize = 11,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 4,
+}, content)
+addCorner(selectButton, 9)
+
+local selectedLabel = textLabel(content, "Selected: none", UDim2.new(1, 0, 0, 18), UDim2.new(0, 0, 0, 64), 10, COLORS.muted)
+
+local function findPlayerByName(query)
+    local normalized = string.lower(string.gsub(query, "^%s*(.-)%s*$", "%1"))
+    if normalized == "" then return nil end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.lower(player.Name) == normalized or string.lower(player.DisplayName) == normalized then
+            return player
+        end
+    end
+    return nil
+end
+
+local function selectPlayer(player)
+    if not player or player == localPlayer then
+        showToast("Invalid Target", false)
+        return false
+    end
+    state.selectedUserId = player.UserId
+    state.selectedName = player.Name
+    nameBox.Text = player.Name
+    selectedLabel.Text = "Selected: " .. player.DisplayName .. "  (@" .. player.Name .. ")"
+    selectedLabel.TextColor3 = COLORS.green
+    showToast("Target Selected", true)
+    return true
+end
+
+selectButton.Activated:Connect(function()
+    local target = findPlayerByName(nameBox.Text)
+    if not target or target == localPlayer then
+        state.selectedUserId = nil
+        state.selectedName = ""
+        selectedLabel.Text = "Selected: none"
+        selectedLabel.TextColor3 = COLORS.muted
+        showToast("Invalid Target", false)
+        return
+    end
+    selectPlayer(target)
+end)
+
+-- Show-all-users toggle and scrollable list
+local usersToggle = make("TextButton", {
+    Name = "ShowUsersToggle",
+    Position = UDim2.new(0, 0, 0, 91),
+    Size = UDim2.new(1, 0, 0, 32),
+    BackgroundColor3 = COLORS.panel2,
+    BorderSizePixel = 0,
+    Text = "＋   SHOW ALL USERS",
+    TextColor3 = COLORS.white,
+    TextSize = 11,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 4,
+}, content)
+addCorner(usersToggle, 8)
+make("UIPadding", { PaddingLeft = UDim.new(0, 11) }, usersToggle)
+local userList = make("ScrollingFrame", {
+    Name = "PlayerList",
+    Position = UDim2.new(0, 0, 0, 130),
+    Size = UDim2.new(1, 0, 0, 0),
+    BackgroundColor3 = COLORS.background,
+    BorderSizePixel = 0,
+    ScrollBarThickness = 4,
+    ScrollBarImageColor3 = COLORS.blue,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    Visible = false,
+    ZIndex = 4,
+}, content)
+addCorner(userList, 8)
+local listLayout = make("UIListLayout", {
+    Padding = UDim.new(0, 4),
+    SortOrder = Enum.SortOrder.Name,
+}, userList)
+make("UIPadding", {
+    PaddingTop = UDim.new(0, 6),
+    PaddingLeft = UDim.new(0, 6),
+    PaddingRight = UDim.new(0, 6),
+}, userList)
+
+local function rebuildPlayerList()
+    for _, child in ipairs(userList:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    local others = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer then table.insert(others, player) end
+    end
+    table.sort(others, function(a, b)
+        return string.lower(a.Name) < string.lower(b.Name)
+    end)
+    for _, player in ipairs(others) do
+        local row = make("TextButton", {
+            Name = "User_" .. player.UserId,
+            Size = UDim2.new(1, -2, 0, 30),
+            BackgroundColor3 = COLORS.panel2,
+            BorderSizePixel = 0,
+            Text = player.DisplayName .. "   (@" .. player.Name .. ")",
+            TextColor3 = COLORS.white,
+            TextSize = 11,
+            Font = Enum.Font.Gotham,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 5,
+        }, userList)
+        addCorner(row, 7)
+        make("UIPadding", { PaddingLeft = UDim.new(0, 9) }, row)
+        row.Activated:Connect(function() selectPlayer(player) end)
+    end
+    task.defer(function()
+        userList.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 12)
+    end)
+end
+
+usersToggle.Activated:Connect(function()
+    state.showUsers = not state.showUsers
+    userList.Visible = state.showUsers
+    userList.Size = UDim2.new(1, 0, 0, state.showUsers and 100 or 0)
+    usersToggle.Text = state.showUsers and "－   HIDE USERS" or "＋   SHOW ALL USERS"
+    rebuildPlayerList()
+end)
+Players.PlayerAdded:Connect(function()
+    if state.showUsers then rebuildPlayerList() end
+end)
+Players.PlayerRemoving:Connect(function(player)
+    if player.UserId == state.selectedUserId then
+        state.selectedUserId = nil
+        state.selectedName = ""
+        selectedLabel.Text = "Selected: none"
+        selectedLabel.TextColor3 = COLORS.muted
+    end
+    if state.showUsers then rebuildPlayerList() end
+end)
+
+-- START / OFF: changes demo status only (no character interaction).
+local startButton = make("TextButton", {
+    Name = "StartToggle",
+    Position = UDim2.new(0, 0, 0, 141),
+    Size = UDim2.new(1, 0, 0, 48),
+    BackgroundColor3 = COLORS.background,
+    BorderSizePixel = 0,
+    Text = "",
+    AutoButtonColor = false,
+    ZIndex = 4,
+}, content)
+addCorner(startButton, 11)
+addStroke(startButton, COLORS.blue, 1.4, 0.1)
+local startGradient = addGradient(startButton, Color3.fromRGB(9, 13, 22), Color3.fromRGB(18, 82, 157), 0)
+local startText = make("TextLabel", {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    Font = Enum.Font.GothamBlack,
+    Text = "ϟ   START",
+    TextSize = 16,
+    TextColor3 = COLORS.white,
+    ZIndex = 5,
+}, startButton)
+local gradientConnection
+
+local function setActive(enabled)
+    state.active = enabled
+    startText.Text = enabled and "ϟ   OFF" or "ϟ   START"
+    if enabled then
+        startText.TextColor3 = COLORS.cyan
+        if gradientConnection then gradientConnection:Disconnect() end
+        gradientConnection = RunService.RenderStepped:Connect(function(dt)
+            if not startGradient.Parent then return end
+            startGradient.Rotation = (startGradient.Rotation + dt * 100) % 360
+        end)
+    else
+        startText.TextColor3 = COLORS.white
+        if gradientConnection then
+            gradientConnection:Disconnect()
+            gradientConnection = nil
+        end
+        startGradient.Rotation = 0
+    end
+end
+startButton.Activated:Connect(function()
+    if not state.active and not state.selectedUserId then
+        showToast("Select a target first", false)
+        return
+    end
+    setActive(not state.active)
+    showToast(state.active and "Demo Enabled" or "Demo Disabled", state.active)
+end)
+
+-- Speed slider; MAX is capped at a safe UI-demo value (100).
+textLabel(content, "SPEED INTENSITY", UDim2.new(0.7, 0, 0, 18), UDim2.new(0, 0, 0, 201), 10, COLORS.muted)
+local speedValue = textLabel(content, "50", UDim2.new(0.3, 0, 0, 18), UDim2.new(0.7, 0, 0, 201), 11, COLORS.cyan)
+speedValue.TextXAlignment = Enum.TextXAlignment.Right
+local sliderTrack = make("Frame", {
+    Name = "SpeedTrack",
+    Position = UDim2.new(0, 0, 0, 230),
+    Size = UDim2.new(1, -58, 0, 8),
+    BackgroundColor3 = Color3.fromRGB(43, 51, 70),
+    BorderSizePixel = 0,
+    ZIndex = 4,
+}, content)
+addCorner(sliderTrack, 8)
+local sliderFill = make("Frame", {
+    Size = UDim2.new(0.5, 0, 1, 0),
+    BackgroundColor3 = COLORS.blue,
+    BorderSizePixel = 0,
+    ZIndex = 5,
+}, sliderTrack)
+addCorner(sliderFill, 8)
+local knob = make("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 0.5, 0),
+    Size = UDim2.fromOffset(16, 16),
+    BackgroundColor3 = COLORS.white,
+    BorderSizePixel = 0,
+    ZIndex = 6,
+}, sliderTrack)
+addCorner(knob, 99)
+addStroke(knob, COLORS.blue, 2, 0)
+local maxButton = make("TextButton", {
+    Position = UDim2.new(1, -50, 0, 216),
+    Size = UDim2.fromOffset(50, 32),
+    BackgroundColor3 = COLORS.panel2,
+    BorderSizePixel = 0,
+    Text = "MAX",
+    TextColor3 = COLORS.cyan,
+    TextSize = 11,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 4,
+}, content)
+addCorner(maxButton, 8)
+
+local function setSpeed(value)
+    state.speed = math.clamp(math.floor(value + 0.5), 1, 100)
+    local alpha = state.speed / 100
+    sliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+    knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+    speedValue.Text = state.speed == 100 and "100 · MAX" or tostring(state.speed)
+end
+local sliding = false
+local function updateSliderFromX(x)
+    local width = sliderTrack.AbsoluteSize.X
+    if width <= 0 then return end
+    setSpeed(math.clamp((x - sliderTrack.AbsolutePosition.X) / width, 0, 1) * 100)
+end
+sliderTrack.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        sliding = true
+        updateSliderFromX(input.Position.X)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        updateSliderFromX(input.Position.X)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        sliding = false
+    end
+end)
+maxButton.Activated:Connect(function() setSpeed(100) end)
+
+-- Mode selector: choices are labels/state only, with no physics or player effects.
+textLabel(content, "VISUAL MODE", UDim2.new(1, 0, 0, 18), UDim2.new(0, 0, 0, 263), 10, COLORS.muted)
+local modeButton = make("TextButton", {
+    Name = "ModeSelector",
+    Position = UDim2.new(0, 0, 0, 286),
+    Size = UDim2.new(1, 0, 0, 38),
+    BackgroundColor3 = COLORS.background,
+    BorderSizePixel = 0,
+    Text = "",
+    ZIndex = 4,
+}, content)
+addCorner(modeButton, 9)
+addStroke(modeButton, COLORS.stroke, 1, 0.2)
+local modeText = textLabel(modeButton, MODES[state.modeIndex], UDim2.new(1, -46, 1, 0), UDim2.new(0, 12, 0, 0), 11, COLORS.white)
+modeText.ZIndex = 5
+local modeArrow = textLabel(modeButton, "⌄", UDim2.fromOffset(24, 38), UDim2.new(1, -31, 0, 0), 18, COLORS.cyan)
+modeArrow.TextXAlignment = Enum.TextXAlignment.Center
+modeArrow.ZIndex = 5
+modeButton.Activated:Connect(function()
+    state.modeIndex = (state.modeIndex % #MODES) + 1
+    modeText.Text = MODES[state.modeIndex]
+end)
+
+-- Informational status card
+local infoCard = make("Frame", {
+    Position = UDim2.new(0, 0, 0, 338),
+    Size = UDim2.new(1, 0, 0, 54),
+    BackgroundColor3 = Color3.fromRGB(15, 31, 42),
+    BorderSizePixel = 0,
+    ZIndex = 4,
+}, content)
+addCorner(infoCard, 9)
+addStroke(infoCard, Color3.fromRGB(45, 115, 145), 1, 0.35)
+local infoText = textLabel(infoCard, "UI preview only. No movement or collisions are applied.", UDim2.new(1, -20, 1, -8), UDim2.new(0, 10, 0, 4), 10, COLORS.cyan)
+infoText.TextWrapped = true
+infoText.ZIndex = 5
+
+--// Open/close and lifecycle
+icon.Activated:Connect(function()
+    panel.Visible = not panel.Visible
+end)
+closeButton.Activated:Connect(function()
+    panel.Visible = false
+end)
+
+gui.Destroying:Connect(function()
+    if gradientConnection then gradientConnection:Disconnect() end
+    if sparkTween then sparkTween:Cancel() end
+end)
+
+-- Entry animation
+panel.Position = UDim2.new(0.5, 0, 0.5, 12)
+panel:GetPropertyChangedSignal("Visible"):Connect(function()
+    if panel.Visible then
+        panel.Position = UDim2.new(0.5, 0, 0.5, 12)
+        TweenService:Create(panel, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+        }):Play()
+    end
+end)
+
+print("Filing FPS Safe UI Demo loaded. This script only changes local UI state.")
